@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工作日報表總目錄</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", Arial, sans-serif; padding: 30px; background-color: #f8f9fa; color: #333; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { font-size: 24px; text-align: center; color: #0056b3; margin-bottom: 10px; border-bottom: 2px solid #0056b3; padding-bottom: 15px; }
+        .subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 20px; }
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 12px; transition: transform 0.2s; }
+        li:hover { transform: translateX(5px); }
+        a { text-decoration: none; color: #333; font-weight: bold; display: block; padding: 12px 20px; background: #f1f3f5; border-left: 5px solid #007bff; border-radius: 0 4px 4px 0; }
+        a:hover { background: #e9ecef; color: #0056b3; }
+        .loading { text-align: center; color: #999; font-style: italic; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>名仕工作日報表總目錄</h1>
+    <div class="subtitle">系統每日自動同步・保留近三個月紀錄</div>
+    
+    <ul id="report-list">
+        <li class="loading">正在讀取雲端報表檔案，請稍候...</li>
+    </ul>
+</div>
+
+<script>
+    // 自動綁定你的 GitHub 帳號與專案
+    const owner = 'jackyies-ctrl';
+    const repo = 'MS-daily';
+    
+    // 線上向 GitHub API 索取最新的檔案清單
+    fetch(`https://api.github.com/repos/${owner}/${repo}/contents/`)
+        .then(response => response.json())
+        .then(files => {
+            const listContainer = document.getElementById('report-list');
+            listContainer.innerHTML = ''; // 清除載入中文字
+            
+            // 篩選出所有 .html 檔案，並排除 index.html 自身
+            const htmlReports = files.filter(file => file.name.endsWith('.html') && file.name !== 'index.html');
+            
+            if (htmlReports.length === 0) {
+                listContainer.innerHTML = '<li class="loading">目前資料庫中尚無報表檔案。</li>';
+                return;
+            }
+            
+            // 將檔案名稱由大到小排序（讓最新日期的報表排在最上面）
+            htmlReports.sort((a, b) => b.name.localeCompare(a.name));
+            
+            // 自動渲染成網頁連結
+            htmlReports.forEach(file => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = file.name;
+                
+                // 去除 .html 延伸檔名，讓畫面顯示更乾淨漂亮
+                const displayName = file.name.replace('.html', '');
+                a.textContent = `📅 報表日期：${displayName}`;
+                
+                li.appendChild(a);
+                listContainer.appendChild(li);
+            });
+        })
+        .catch(error => {
+            console.error('無法讀取報表清單:', error);
+            document.getElementById('report-list').innerHTML = '<li class="loading" style="color:red;">系統載入失敗，請重新整理網頁。</li>';
+        });
+</script>
+
+</body>
+</html>
